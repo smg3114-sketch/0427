@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'OngeulipKonkon';
+      src: local('온글잎 콘콘체'); 
+    }
+
+    body {
+      font-family: 'OngeulipKonkon', 'Noto Sans KR', sans-serif;
+      background-color: #f6f3ff;
+      margin: 0;
+      padding: 16px;
+      color: #3e3e3e;
+    }
+
+    .app-container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 12px 30px rgba(106, 76, 147, 0.15);
+      overflow: hidden;
+    }
+
+    .app-header {
+      background-color: #6a4c93;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .form-content {
+      padding: 20px;
+    }
+
+    .input-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #6a4c93;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1.5px solid #e5e0ff;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      background-color: #faf9ff;
+      transition: all 0.2s ease;
+    }
+
+    input:focus, textarea:focus {
+      border-color: #6a4c93;
+      background-color: white;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(106, 76, 147, 0.1);
+    }
+
+    .photo-upload-box {
+      border: 2px dashed #dcd0ff;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 20px;
+      background: #fdfcff;
+    }
+
+    .photo-upload-box:hover {
+      background: #f3f0ff;
+    }
+
+    #submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #6a4c93 0%, #8a6db1 100%);
+      color: white;
+      font-weight: 700;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(106, 76, 147, 0.3);
+      border: none;
+      cursor: pointer;
+    }
+
+    #submit-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    #loading-spinner {
+      display: none;
+      text-align: center;
+      padding: 15px;
+      color: #6a4c93;
+      font-size: 0.85rem;
+    }
+
+    .reply-result {
+      display: none;
+      margin-top: 20px;
+      background: #f3f0ff;
+      padding: 16px;
+      border-radius: 12px;
+      border-left: 5px solid #6a4c93;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="app-header">💜 MBTI 답장 도우미</div>
+    
+    <div class="form-content">
+      <label class="input-label">상대방 성함</label>
+      <input type="text" id="targetName" placeholder="성함을 입력해주세요">
+
+      <label class="input-label">상대방 MBTI</label>
+      <select id="mbti">
+        <option value="모름">잘 모름</option>
+        <option value="ISTJ">ISTJ (현실주의자)</option><option value="ISFJ">ISFJ (수호자)</option>
+        <option value="INFJ">INFJ (옹호자)</option><option value="INTJ">INTJ (전략가)</option>
+        <option value="ISTP">ISTP (장인)</option><option value="ISFP">ISFP (모험가)</option>
+        <option value="INFP">INFP (중재자)</option><option value="INTP">INTP (논리술사)</option>
+        <option value="ESTP">ESTP (사업가)</option><option value="ESFP">ESFP (연예인)</option>
+        <option value="ENFP">ENFP (활동가)</option><option value="ENTP">ENTP (변론가)</option>
+        <option value="ESTJ">ESTJ (경영자)</option><option value="ESFJ">ESFJ (영사관)</option>
+        <option value="ENFJ">ENFJ (주인공)</option><option value="ENTJ">ENTJ (통치자)</option>
+      </select>
+
+      <label class="input-label">카톡 대화 내용</label>
+      <textarea id="chatContent" rows="4" placeholder="내용을 붙여넣거나 아래 사진을 업로드하세요"></textarea>
+
+      <label class="input-label">대화 캡쳐 이미지 (선택)</label>
+      <div class="photo-upload-box" onclick="document.getElementById('imageFile').click()">
+        <span id="file-status">📸 스크린샷 업로드</span>
+        <input type="file" id="imageFile" accept="image/*" class="hidden" onchange="handleFileSelect(this)">
+      </div>
+
+      <button id="submit-btn" onclick="startAnalysis()">답장 분석 시작하기</button>
+
+      <div id="loading-spinner">
+        <div class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-purple-700 mr-2"></div>
+        AI가 상대방의 심리를 파악하고 있습니다...
+      </div>
+
+      <div id="reply-box" class="reply-result">
+        <div class="text-[10px] font-bold text-purple-700 uppercase mb-1">Recommended Reply</div>
+        <div id="aiReplyText" class="text-sm font-medium leading-relaxed"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let imgData = null;
+    let imgType = null;
+
+    function handleFileSelect(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        imgData = e.target.result.split(',')[1];
+        imgType = file.type;
+        document.getElementById('file-status').innerText = "✅ 이미지 선택 완료";
+        document.getElementById('file-status').style.color = "#6a4c93";
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function startAnalysis() {
+      const targetName = document.getElementById('targetName').value;
+      const mbti = document.getElementById('mbti').value;
+      const chatContent = document.getElementById('chatContent').value;
+
+      if (!targetName) { alert("상대방 이름을 알려주세요."); return; }
+      if (!chatContent && !imgData) { alert("대화 내용이나 사진을 입력해주세요."); return; }
+
+      // 사용자 분위기 질문 (팝업)
+      const keyword = prompt("어떤 분위기로 답장하고 싶나요?\n(예: 다정하게, 쿨하게, 위트있게, 단호하게)");
+      if (!keyword) { alert("답장 분위기를 입력해야 분석이 가능합니다."); return; }
+
+      // UI 로딩 상태
+      document.getElementById('loading-spinner').style.display = 'block';
+      document.getElementById('submit-btn').disabled = true;
+      document.getElementById('reply-box').style.display = 'none';
+
+      const payload = {
+        targetName: targetName,
+        mbti: mbti,
+        chatContent: chatContent,
+        mood: keyword,
+        image: imgData ? { type: imgType, base64: imgData } : null
+      };
+
+      google.script.run
+        .withSuccessHandler((response) => {
+          document.getElementById('loading-spinner').style.display = 'none';
+          document.getElementById('submit-btn').disabled = false;
+          document.getElementById('reply-box').style.display = 'block';
+          document.getElementById('aiReplyText').innerText = response;
+        })
+        .withFailureHandler((err) => {
+          alert("서버 오류가 발생했습니다: " + err);
+          document.getElementById('loading-spinner').style.display = 'none';
+          document.getElementById('submit-btn').disabled = false;
+        })
+        .processAnalysisRequest(payload);
+    }
+  </script>
+</body>
+</html>
